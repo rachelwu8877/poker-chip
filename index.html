@@ -1,0 +1,481 @@
+<title>籌碼結算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #121d18;
+    --bg-vignette: radial-gradient(120% 90% at 50% -10%, #1d2f26 0%, #121d18 55%, #0d1512 100%);
+    --surface: #1a2620;
+    --surface-raised: #20302a;
+    --border: #2c3d34;
+    --text: #ede6d6;
+    --text-dim: #9caa9f;
+    --text-faint: #6b7a70;
+    --accent: #c9a54a;
+    --accent-soft: rgba(201, 165, 74, 0.14);
+
+    --chip-500: #8a5fb0;
+    --chip-100: #c7cdd3;
+    --chip-50: #d9903f;
+    --chip-20: #4f9d74;
+    --chip-10: #4f86c6;
+    --chip-5: #c4483d;
+
+    --font-display: "Noto Serif TC", "PMingLiU", serif;
+    --font-body: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    --font-mono: "IBM Plex Mono", "Consolas", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    background-image: var(--bg-vignette);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: var(--font-body);
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 60px;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+
+  .chip-stack {
+    width: 64px;
+    height: 46px;
+    margin: 0 auto 14px;
+    position: relative;
+  }
+  .chip-stack .disc {
+    position: absolute;
+    left: 50%;
+    width: 56px;
+    height: 14px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+    border: 2px dashed rgba(255,255,255,0.5);
+  }
+  .chip-stack .disc:nth-child(1) { bottom: 0px;  background: var(--chip-500); }
+  .chip-stack .disc:nth-child(2) { bottom: 8px;  background: var(--chip-5); }
+  .chip-stack .disc:nth-child(3) { bottom: 16px; background: var(--chip-20); }
+  .chip-stack .disc:nth-child(4) { bottom: 24px; background: var(--chip-10); }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0;
+    text-wrap: balance;
+    letter-spacing: 0.02em;
+  }
+
+  .sub {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .rows {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    border-left: 3px solid var(--row-color, transparent);
+  }
+  .row:last-child { border-bottom: none; }
+
+  .dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    flex: none;
+    border: 2px dashed rgba(255,255,255,0.55);
+    background: var(--row-color);
+  }
+
+  .denom {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    width: 46px;
+    flex: none;
+  }
+
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    flex: none;
+  }
+
+  .stepper button {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 18px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .stepper button:active { background: var(--surface-raised); color: var(--text); }
+
+  .stepper input {
+    width: 44px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 15px;
+    text-align: center;
+    -moz-appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button,
+  .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper input:focus { outline: none; background: var(--surface-raised); }
+
+  .subtotal {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 64px;
+  }
+
+  .rate-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface-raised);
+  }
+  .rate-row label {
+    font-size: 13px;
+    color: var(--text-dim);
+    flex: 1;
+  }
+  .rate-row .rate-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 7px 10px;
+    width: 84px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 14px;
+    text-align: right;
+  }
+  .rate-row .rate-input:focus { outline: 1px solid var(--accent); }
+
+  .total-panel {
+    margin-top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+
+  .total-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+  }
+  .total-line + .total-line { border-top: 1px dashed var(--border); }
+
+  .total-label { font-size: 13px; color: var(--text-dim); }
+
+  .total-value {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 17px;
+    color: var(--text);
+  }
+
+  .grand {
+    padding-top: 12px;
+  }
+  .grand .total-label { font-size: 14px; color: var(--text); }
+  .grand .total-value {
+    font-size: 30px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 13px 0;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #1c1608;
+    font-weight: 700;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:focus-visible, .stepper button:focus-visible, .rate-input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn, .toast { transition: none; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <div class="chip-stack" aria-hidden="true">
+      <div class="disc"></div><div class="disc"></div><div class="disc"></div><div class="disc"></div>
+    </div>
+    <div class="eyebrow">德州撲克 · 現場結算</div>
+    <h1>籌碼結算</h1>
+    <p class="sub">填入每個面額的顆數，自動算出總金額</p>
+  </header>
+
+  <div class="card">
+    <div class="rows" id="rows"></div>
+    <div class="rate-row">
+      <label for="rateInput">匯率（面額 × 匯率 = 實際金額）</label>
+      <input class="rate-input" id="rateInput" type="number" inputmode="decimal" step="any" value="1">
+    </div>
+  </div>
+
+  <div class="total-panel">
+    <div class="total-line">
+      <span class="total-label">面額總計</span>
+      <span class="total-value" id="faceTotal">0</span>
+    </div>
+    <div class="total-line grand">
+      <span class="total-label">實際金額</span>
+      <span class="total-value" id="actualTotal">0</span>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="resetBtn" type="button">重設</button>
+    <button class="btn primary" id="copyBtn" type="button">複製結果</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const DENOMS = [
+    { v: 500, color: 'var(--chip-500)' },
+    { v: 100, color: 'var(--chip-100)' },
+    { v: 50,  color: 'var(--chip-50)'  },
+    { v: 20,  color: 'var(--chip-20)'  },
+    { v: 10,  color: 'var(--chip-10)'  },
+    { v: 5,   color: 'var(--chip-5)'   },
+  ];
+
+  const rowsEl = document.getElementById('rows');
+  const rateInput = document.getElementById('rateInput');
+  const faceTotalEl = document.getElementById('faceTotal');
+  const actualTotalEl = document.getElementById('actualTotal');
+  const toastEl = document.getElementById('toast');
+
+  DENOMS.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.setProperty('--row-color', d.color);
+    row.innerHTML = `
+      <div class="dot"></div>
+      <div class="denom">${d.v}</div>
+      <div class="stepper">
+        <button type="button" data-dir="-1" data-denom="${d.v}" aria-label="減少 ${d.v} 面額顆數">–</button>
+        <input type="number" inputmode="numeric" min="0" step="1" value="0" data-input="${d.v}" aria-label="${d.v} 面額顆數">
+        <button type="button" data-dir="1" data-denom="${d.v}" aria-label="增加 ${d.v} 面額顆數">+</button>
+      </div>
+      <div class="subtotal" data-subtotal="${d.v}">0</div>
+    `;
+    rowsEl.appendChild(row);
+  });
+
+  function readRate() {
+    const r = parseFloat(rateInput.value);
+    return Number.isFinite(r) ? r : 1;
+  }
+
+  function formatNumber(n) {
+    if (!Number.isFinite(n)) return '0';
+    const rounded = Math.round(n * 100) / 100;
+    return rounded.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  }
+
+  function recalc() {
+    const rate = readRate();
+    let faceTotal = 0;
+    DENOMS.forEach(d => {
+      const input = rowsEl.querySelector(`input[data-input="${d.v}"]`);
+      const qty = Math.max(0, parseInt(input.value, 10) || 0);
+      const subtotal = d.v * qty;
+      faceTotal += subtotal;
+      rowsEl.querySelector(`[data-subtotal="${d.v}"]`).textContent = formatNumber(subtotal);
+    });
+    faceTotalEl.textContent = formatNumber(faceTotal);
+    actualTotalEl.textContent = formatNumber(faceTotal * rate);
+  }
+
+  rowsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-dir]');
+    if (!btn) return;
+    const denom = btn.getAttribute('data-denom');
+    const input = rowsEl.querySelector(`input[data-input="${denom}"]`);
+    const dir = parseInt(btn.getAttribute('data-dir'), 10);
+    const next = Math.max(0, (parseInt(input.value, 10) || 0) + dir);
+    input.value = next;
+    recalc();
+  });
+
+  rowsEl.addEventListener('input', (e) => {
+    if (e.target.matches('input[data-input]')) recalc();
+  });
+
+  rateInput.addEventListener('input', recalc);
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    rowsEl.querySelectorAll('input[data-input]').forEach(i => i.value = 0);
+    recalc();
+    showToast('已重設');
+  });
+
+  function buildResultText() {
+    const rate = readRate();
+    let faceTotal = 0;
+    const lines = DENOMS.map(d => {
+      const input = rowsEl.querySelector(`input[data-input="${d.v}"]`);
+      const qty = Math.max(0, parseInt(input.value, 10) || 0);
+      const subtotal = d.v * qty;
+      faceTotal += subtotal;
+      return `${d.v} x ${qty} = ${formatNumber(subtotal)}`;
+    });
+    const actual = faceTotal * rate;
+    let text = `📊 籌碼結算\n${lines.join('\n')}\n------------------\n面額總計：${formatNumber(faceTotal)}`;
+    if (rate !== 1) text += `\n匯率：${rate}`;
+    text += `\n實際金額：${formatNumber(actual)} 元`;
+    return text;
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toastEl.classList.remove('show'), 1600);
+  }
+
+  document.getElementById('copyBtn').addEventListener('click', async () => {
+    const text = buildResultText();
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('已複製，可貼到群組');
+    } catch (err) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('已複製，可貼到群組');
+      } catch (err2) {
+        showToast('複製失敗，請手動選取');
+      }
+    }
+  });
+
+  try {
+    const savedRate = localStorage.getItem('chip-calc-rate');
+    if (savedRate !== null) rateInput.value = savedRate;
+  } catch (e) {}
+
+  rateInput.addEventListener('change', () => {
+    try { localStorage.setItem('chip-calc-rate', rateInput.value); } catch (e) {}
+  });
+
+  recalc();
+</script>
